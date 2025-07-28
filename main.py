@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Request, HTTPException
 from dotenv import load_dotenv
-from automation_async import run_campaigns  # ✅ import the async version
+from automation_async import run_campaigns
 import os
 
 load_dotenv()
@@ -15,8 +15,5 @@ async def automation_handler(request: Request):
         raise HTTPException(status_code=403, detail="Unauthorized")
 
     campaign_ids = payload.get("campaign_ids", [])
-    mode = payload.get("mode", "single")
-    timestamp = payload.get("timestamp")
-
-    results = await run_campaigns(campaign_ids)  # ✅ use await
-    return {"status": "done", "processed": results}
+    results = await run_campaigns(campaign_ids)
+    return { "status": "done", "processed": results }
