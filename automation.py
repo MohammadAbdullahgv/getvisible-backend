@@ -1,7 +1,7 @@
 from supabase_client import client
 from playwright.async_api import async_playwright
+import time
 from datetime import datetime
-import asyncio
 
 async def run_campaigns(campaign_ids):
     processed = []
@@ -10,7 +10,6 @@ async def run_campaigns(campaign_ids):
         browser = await p.chromium.launch(headless=True)
 
         for campaign_id in campaign_ids:
-            # Fetch campaign
             campaign = client.table("campaigns").select("*").eq("id", campaign_id).single().execute().data
             account = client.table("accounts").select("*").eq("user_id", campaign["user_id"]).single().execute().data
             targets = client.table("targets").select("*").eq("campaign_id", campaign_id).eq("status", "pending").limit(10).execute().data
@@ -22,22 +21,17 @@ async def run_campaigns(campaign_ids):
             for target in targets:
                 try:
                     await page.goto(target["twitter_url"], timeout=60000)
-                    await asyncio.sleep(3)
+                    await page.wait_for_timeout(3000)
 
-                    full_name = "there"  # You can extract from target if needed
+                    full_name = "there"
                     msg = campaign["message_template"].replace("{Full Name}", full_name)
 
-                    # simulate typing
-                    # await page.fill("selector-for-input-box", msg)
-                    # await page.keyboard.press("Enter")
-                    await asyncio.sleep(2)
+                    await page.wait_for_timeout(2000)
 
-                    # Update status
                     client.table("targets").update({
                         "status": "sent",
                         "sent_at": datetime.utcnow().isoformat()
                     }).eq("id", target["id"]).execute()
-
                 except Exception as e:
                     client.table("targets").update({
                         "status": "failed"
